@@ -354,11 +354,16 @@ class Query(object):
                 spName = spName.encode('ascii', 'ignore')
             logger.info('Executing : Call Stored Procedure  |  %s  |  %s ' % (spName, spParams))
             cur.callproc(spName, spParams)
-            cur.nextset()
             retVal=list()
-            for row in cur:
-                #logger.info ( ' %s ' % (row))
-                retVal.append(row)
+            if self.db_api_module_name in ["cx_Oracle"]:
+                for resultSet in enumerate(cur.getimplicitresults()):
+                    for row in resultSet:
+                        retVal.append(row)
+            else:
+                cur = cur.nextset()
+                for row in cur:
+                    #logger.info ( ' %s ' % (row))
+                    retVal.append(row)
             if not sansTran:
                 self._dbconnection.commit()
             return retVal
